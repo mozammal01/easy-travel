@@ -11,12 +11,21 @@ const MAX_ACTIVE_TRIPS_PER_USER = 50;
 const MIN_TRIP_DAYS = 1;
 const MAX_TRIP_DAYS = 60;
 
+const TRIP_WITH_ITINERARY_INCLUDE = {
+  itinerary: {
+    orderBy: { dayIndex: 'asc' as const },
+    include: {
+      items: { orderBy: { order: 'asc' as const } },
+    },
+  },
+};
+
 function computeTotalDays(startDate: Date, endDate: Date): number {
   const msPerDay = 24 * 60 * 60 * 1000;
   return Math.round((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
 }
 
-export async function generateTripItinerary(userId: string, input: CreateTripInput) {
+async function assertUnderActiveTripCap(userId: string): Promise<void> {
   const activeCount = await prisma.trip.count({
     where: { userId, deletedAt: null, status: { not: 'ARCHIVED' } },
   });
@@ -26,6 +35,10 @@ export async function generateTripItinerary(userId: string, input: CreateTripInp
       `You've reached the limit of ${MAX_ACTIVE_TRIPS_PER_USER} active trips`,
     );
   }
+}
+
+export async function generateTripItinerary(userId: string, input: CreateTripInput) {
+  await assertUnderActiveTripCap(userId);
 
   const totalDays = computeTotalDays(input.startDate, input.endDate);
   if (totalDays < MIN_TRIP_DAYS || totalDays > MAX_TRIP_DAYS) {
@@ -66,28 +79,22 @@ export async function generateTripItinerary(userId: string, input: CreateTripInp
         })),
       },
     },
-    include: {
-      itinerary: {
-        orderBy: { dayIndex: 'asc' },
-        include: {
-          items: { orderBy: { order: 'asc' } },
-        },
-      },
-    },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
+  });
+}
+
+export async function listTrips(userId: string) {
+  return prisma.trip.findMany({
+    where: { userId, deletedAt: null },
+    orderBy: { createdAt: 'desc' },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
   });
 }
 
 export async function getTripForUser(userId: string, tripId: string) {
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
-    include: {
-      itinerary: {
-        orderBy: { dayIndex: 'asc' },
-        include: {
-          items: { orderBy: { order: 'asc' } },
-        },
-      },
-    },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
   });
 
   if (!trip || trip.userId !== userId || trip.deletedAt) {
@@ -95,6 +102,50 @@ export async function getTripForUser(userId: string, tripId: string) {
   }
 
   return trip;
+}
+
+export async function duplicateTrip(userId: string, tripId: string) {
+  const source = await getTripForUser(userId, tripId);
+  await assertUnderActiveTripCap(userId);
+
+  return prisma.trip.create({
+    data: {
+      userId,
+      destination: source.destination,
+      startDate: source.startDate,
+      endDate: source.endDate,
+      travelers: source.travelers,
+      budgetTotal: source.budgetTotal,
+      budgetCurrency: source.budgetCurrency,
+      budgetBreakdown: source.budgetBreakdown as object,
+      status: 'DRAFT',
+      itinerary: {
+        create: source.itinerary.map((day) => ({
+          dayIndex: day.dayIndex,
+          items: {
+            create: day.items.map((item) => ({
+              timeBlock: item.timeBlock,
+              order: item.order,
+              activityName: item.activityName,
+              durationMin: item.durationMin,
+              cost: item.cost,
+              mapLink: item.mapLink ?? undefined,
+              tips: item.tips ?? undefined,
+            })),
+          },
+        })),
+      },
+    },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
+  });
+}
+
+export async function softDeleteTrip(userId: string, tripId: string): Promise<void> {
+  await getTripForUser(userId, tripId);
+  await prisma.trip.update({
+    where: { id: tripId },
+    data: { deletedAt: new Date() },
+  });
 }
 
 export async function updateItineraryItem(

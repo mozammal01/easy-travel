@@ -9,14 +9,26 @@ import { validateBody } from '../middleware/validate';
 import { asyncHandler } from '../lib/asyncHandler';
 import {
   addItineraryItem,
+  duplicateTrip,
   generateTripItinerary,
   getTripForUser,
+  listTrips,
   removeItineraryItem,
+  softDeleteTrip,
   updateItineraryItem,
 } from '../services/trip.service';
 import { toTripDto } from '../lib/dto';
 
 export const tripsRouter = Router();
+
+tripsRouter.get(
+  '/',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const trips = await listTrips(req.userId!);
+    res.json({ trips: trips.map(toTripDto) });
+  }),
+);
 
 tripsRouter.post(
   '/',
@@ -34,6 +46,24 @@ tripsRouter.get(
   asyncHandler(async (req, res) => {
     const trip = await getTripForUser(req.userId!, req.params.id);
     res.json({ trip: toTripDto(trip) });
+  }),
+);
+
+tripsRouter.delete(
+  '/:id',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    await softDeleteTrip(req.userId!, req.params.id);
+    res.status(204).send();
+  }),
+);
+
+tripsRouter.post(
+  '/:id/duplicate',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const trip = await duplicateTrip(req.userId!, req.params.id);
+    res.status(201).json({ trip: toTripDto(trip) });
   }),
 );
 

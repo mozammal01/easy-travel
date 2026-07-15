@@ -19,12 +19,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Check, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import type { DayPlanDto, ItineraryItemDto, TripDto } from '@meghjatra/shared';
 import { useAuth } from '@/contexts/auth-context';
 import { apiClient, ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening'] as const;
@@ -222,6 +224,9 @@ export function ItineraryBoard({ tripId }: { tripId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
+      <Button variant="ghost" size="sm" className="self-start" render={<Link href="/trips" />}>
+        ← Back to trips
+      </Button>
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{trip.destination}</h1>
