@@ -16,3 +16,18 @@ export function validateBody(schema: ZodTypeAny) {
     next();
   };
 }
+
+export function validateQuery(schema: ZodTypeAny) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) {
+      const message = result.error.issues
+        .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+        .join('; ');
+      next(new HttpError(400, message));
+      return;
+    }
+    req.query = result.data as typeof req.query;
+    next();
+  };
+}
