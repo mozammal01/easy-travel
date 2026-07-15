@@ -87,3 +87,10 @@ export const generatedItinerarySchema = z.object({
   days: z.array(generatedDayPlanSchema).min(1),
 });
 export type GeneratedItinerary = z.infer<typeof generatedItinerarySchema>;
+
+export const updateItineraryItemInputSchema = z.object({
+  dayPlanId: z.string().uuid().optional(),
+  timeBlock: z.enum(['morning', 'afternoon', 'evening']).optional(),
+  order: z.number().int().nonnegative().optional(),
+});
+export type UpdateItineraryItemInput = z.infer<typeof updateItineraryItemInputSchema>;

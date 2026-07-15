@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,7 +20,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 
 const tripFormSchema = z
   .object({
@@ -59,11 +58,11 @@ function toDateInputValue(date: Date): string {
 
 export function TripCreationFlow() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { accessToken } = useAuth();
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [trip, setTrip] = useState<TripDto | null>(null);
 
   const today = new Date();
   const defaultStart = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -98,16 +97,11 @@ export function TripCreationFlow() {
       const { trip: created } = await apiClient.post<{ trip: TripDto }>('/trips', values, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setTrip(created);
+      router.push(`/trips/${created.id}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
-    } finally {
       setIsGenerating(false);
     }
-  }
-
-  if (trip) {
-    return <GeneratedItinerary trip={trip} />;
   }
 
   return (
@@ -303,44 +297,5 @@ export function TripCreationFlow() {
         </Form>
       </CardContent>
     </Card>
-  );
-}
-
-function GeneratedItinerary({ trip }: { trip: TripDto }) {
-  return (
-    <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{trip.destination}</CardTitle>
-          <CardDescription>
-            {new Date(trip.startDate).toLocaleDateString()} –{' '}
-            {new Date(trip.endDate).toLocaleDateString()} · {trip.travelers} traveler
-            {trip.travelers > 1 ? 's' : ''} · {trip.budgetTotal} {trip.budgetCurrency}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      {trip.itinerary.map((day) => (
-        <Card key={day.id}>
-          <CardHeader>
-            <CardTitle className="text-base">Day {day.dayIndex + 1}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {day.items.map((item) => (
-              <div key={item.id} className="flex flex-col gap-1 rounded-md border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{item.activityName}</span>
-                  <Badge variant="outline">{item.timeBlock}</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {item.durationMin} min · {item.cost} {trip.budgetCurrency}
-                </p>
-                {item.tips && <p className="text-sm text-muted-foreground">Tip: {item.tips}</p>}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
   );
 }

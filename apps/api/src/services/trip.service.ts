@@ -1,4 +1,4 @@
-import type { CreateTripInput } from '@meghjatra/shared';
+import type { CreateTripInput, UpdateItineraryItemInput } from '@meghjatra/shared';
 import { prisma } from '../lib/prisma';
 import { getAiProvider } from '../ai';
 import { HttpError } from '../middleware/errorHandler';
@@ -71,4 +71,52 @@ export async function generateTripItinerary(userId: string, input: CreateTripInp
       },
     },
   });
+}
+
+export async function getTripForUser(userId: string, tripId: string) {
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: {
+      itinerary: {
+        orderBy: { dayIndex: 'asc' },
+        include: {
+          items: { orderBy: { order: 'asc' } },
+        },
+      },
+    },
+  });
+
+  if (!trip || trip.userId !== userId || trip.deletedAt) {
+    throw new HttpError(404, 'Trip not found');
+  }
+
+  return trip;
+}
+
+export async function updateItineraryItem(
+  userId: string,
+  tripId: string,
+  itemId: string,
+  input: UpdateItineraryItemInput,
+) {
+  const trip = await getTripForUser(userId, tripId);
+  const item = trip.itinerary.flatMap((day) => day.items).find((i) => i.id === itemId);
+  if (!item) {
+    throw new HttpError(404, 'Itinerary item not found');
+  }
+
+  if (input.dayPlanId && !trip.itinerary.some((day) => day.id === input.dayPlanId)) {
+    throw new HttpError(400, 'Invalid dayPlanId for this trip');
+  }
+
+  await prisma.itineraryItem.update({
+    where: { id: itemId },
+    data: {
+      dayPlanId: input.dayPlanId,
+      timeBlock: input.timeBlock,
+      order: input.order,
+    },
+  });
+
+  return getTripForUser(userId, tripId);
 }
