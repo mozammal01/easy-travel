@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export class ApiError extends Error {
   status: number;
@@ -34,6 +34,12 @@ export const apiClient = {
     request<T>(path, {
       ...options,
       method: 'POST',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
+  patch: <T>(path: string, body?: unknown, options?: RequestInit) =>
+    request<T>(path, {
+      ...options,
+      method: 'PATCH',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
   delete: <T>(path: string, options?: RequestInit) =>

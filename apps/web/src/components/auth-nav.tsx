@@ -24,7 +24,9 @@ export function AuthNav() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-muted-foreground">Hi, {user.displayName}</span>
+      <Button variant="ghost" render={<Link href="/profile" />}>
+        Hi, {user.displayName}
+      </Button>
       <Button variant="outline" onClick={() => logout()}>
         Log out
       </Button>

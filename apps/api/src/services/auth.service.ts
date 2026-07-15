@@ -1,9 +1,10 @@
 import type { User } from '@prisma/client';
-import type { LoginInput, RegisterInput, UserDto } from '@meghjatra/shared';
+import type { LoginInput, RegisterInput } from '@meghjatra/shared';
 import { prisma } from '../lib/prisma';
 import { hashPassword, comparePassword } from '../lib/password';
 import { signAccessToken, signRefreshToken } from '../lib/jwt';
 import { generateResetToken, hashResetToken } from '../lib/resetToken';
+import { toUserDto } from '../lib/dto';
 import { env } from '../config/env';
 import { HttpError } from '../middleware/errorHandler';
 
@@ -12,20 +13,6 @@ const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
 function sendPasswordResetEmail(email: string, rawToken: string) {
   const resetLink = `${env.CORS_ORIGIN}/reset-password?token=${rawToken}`;
   console.log(`[email:stub] Password reset link for ${email}: ${resetLink}`);
-}
-
-function toUserDto(user: User): UserDto {
-  return {
-    id: user.id,
-    email: user.email,
-    displayName: user.displayName,
-    avatarUrl: user.avatarUrl,
-    interests: user.interests,
-    currency: user.currency,
-    language: user.language,
-    role: user.role,
-    createdAt: user.createdAt,
-  };
 }
 
 function issueSession(user: User) {

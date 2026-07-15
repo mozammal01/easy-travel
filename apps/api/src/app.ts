@@ -1,3 +1,4 @@
+import path from 'node:path';
 import express, { Express } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -16,6 +17,8 @@ export function createApp(): Express {
   app.use(express.json());
   app.use(cookieParser());
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   app.use('/health', healthRouter);
   app.use('/auth', authRouter);
