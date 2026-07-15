@@ -1,8 +1,9 @@
-import type { DayPlan, Favourite, ItineraryItem, Trip, User } from '@prisma/client';
+import type { DayPlan, Favourite, ItineraryItem, Review, Trip, User } from '@prisma/client';
 import type {
   BudgetBreakdown,
   FavouriteDto,
   ItineraryItemDto,
+  ReviewDto,
   TripDto,
   UserDto,
 } from '@meghjatra/shared';
@@ -65,5 +66,19 @@ export function toFavouriteDto(favourite: Favourite): FavouriteDto {
     itemRef: favourite.itemRef,
     metadata: favourite.metadata as Record<string, unknown> | null,
     createdAt: favourite.createdAt,
+  };
+}
+
+export function toReviewDto(review: Review): ReviewDto {
+  return {
+    id: review.id,
+    userId: review.userId,
+    destination: review.destination,
+    rating: review.rating,
+    text: review.text,
+    helpfulCount: review.helpfulCount,
+    createdAt: review.createdAt,
+    editableUntil: review.editableUntil,
+    flagged: review.flagged,
   };
 }

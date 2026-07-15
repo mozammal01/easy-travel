@@ -19,3 +19,22 @@ export const createReviewInputSchema = z.object({
   text: z.string().min(20).max(500),
 });
 export type CreateReviewInput = z.infer<typeof createReviewInputSchema>;
+
+export const updateReviewInputSchema = z
+  .object({
+    rating: z.number().int().min(1).max(5).optional(),
+    text: z.string().min(20).max(500).optional(),
+  })
+  .refine((data) => data.rating !== undefined || data.text !== undefined, {
+    message: 'At least one of rating or text must be provided',
+  });
+export type UpdateReviewInput = z.infer<typeof updateReviewInputSchema>;
+
+export const reviewSortSchema = z.enum(['recent', 'rating', 'helpful']);
+export type ReviewSort = z.infer<typeof reviewSortSchema>;
+
+export const listReviewsQuerySchema = z.object({
+  destination: z.string().min(1),
+  sort: reviewSortSchema.optional(),
+});
+export type ListReviewsQuery = z.infer<typeof listReviewsQuerySchema>;
