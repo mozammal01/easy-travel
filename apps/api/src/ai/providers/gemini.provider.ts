@@ -1,7 +1,12 @@
-import type { CreateTripInput, DestinationRecommendation, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
+import type { AccommodationRequest, CreateTripInput, DestinationRecommendation, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
 import type { AiProvider } from '../types';
 import { buildRecommendationPrompt, parseRecommendationResponse } from '../prompt';
 import { buildItineraryPrompt, parseItineraryResponse } from '../itineraryPrompt';
+import {
+  buildAccommodationPrompt,
+  parseAccommodationResponse,
+  type GeneratedAccommodation,
+} from '../accommodationPrompt';
 import { AI_REQUEST_TIMEOUT_MS } from '../constants';
 import { env } from '../../config/env';
 import { HttpError } from '../../middleware/errorHandler';
@@ -29,6 +34,14 @@ export class GeminiProvider implements AiProvider {
     const prompt = buildItineraryPrompt(input, totalDays);
     const text = await this.callGemini(prompt);
     return parseItineraryResponse(text, totalDays);
+  }
+
+  async getAccommodationRecommendations(
+    input: AccommodationRequest,
+  ): Promise<GeneratedAccommodation[]> {
+    const prompt = buildAccommodationPrompt(input);
+    const text = await this.callGemini(prompt);
+    return parseAccommodationResponse(text);
   }
 
   private async callGemini(prompt: string): Promise<string> {
