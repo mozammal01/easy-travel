@@ -1,5 +1,6 @@
 import type { DayPlan, Favourite, ItineraryItem, Review, Trip, User } from '@prisma/client';
 import type {
+  AdminUserDto,
   BudgetBreakdown,
   FavouriteDto,
   ItineraryItemDto,
@@ -80,5 +81,16 @@ export function toReviewDto(review: Review): ReviewDto {
     createdAt: review.createdAt,
     editableUntil: review.editableUntil,
     flagged: review.flagged,
+  };
+}
+
+export function toAdminUserDto(user: User): AdminUserDto {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role,
+    createdAt: user.createdAt,
+    deletedAt: user.deletedAt,
   };
 }
