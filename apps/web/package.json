@@ -1,0 +1,13 @@
+{
+  "name": "@meghjatra/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"web dev server not yet scaffolded (see Commit 4)\" && exit 0",
+    "build": "echo \"nothing to build yet\" && exit 0",
+    "typecheck": "echo \"no source yet (see Commit 4)\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
