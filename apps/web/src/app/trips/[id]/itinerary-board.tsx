@@ -224,9 +224,14 @@ export function ItineraryBoard({ tripId }: { tripId: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Button variant="ghost" size="sm" className="self-start" render={<Link href="/trips" />}>
-        ← Back to trips
-      </Button>
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" render={<Link href="/trips" />}>
+          ← Back to trips
+        </Button>
+        <Button variant="outline" size="sm" render={<Link href={`/trips/${tripId}/budget`} />}>
+          View budget
+        </Button>
+      </div>
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{trip.destination}</h1>
