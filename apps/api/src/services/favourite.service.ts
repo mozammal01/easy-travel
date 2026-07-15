@@ -1,11 +1,27 @@
-import type { CreateFavouriteInput } from '@meghjatra/shared';
+import type { CreateFavouriteInput, ListFavouritesQuery } from '@meghjatra/shared';
 import { prisma } from '../lib/prisma';
 
-export async function listFavourites(userId: string) {
-  return prisma.favourite.findMany({
-    where: { userId },
+const DEFAULT_LIMIT = 24;
+
+export function paginate<T extends { id: string }>(
+  rows: T[],
+  limit: number,
+): { items: T[]; nextCursor: string | null } {
+  const hasMore = rows.length > limit;
+  const items = hasMore ? rows.slice(0, limit) : rows;
+  return { items, nextCursor: hasMore ? items[items.length - 1].id : null };
+}
+
+export async function listFavourites(userId: string, query: ListFavouritesQuery) {
+  const limit = query.limit ?? DEFAULT_LIMIT;
+  const rows = await prisma.favourite.findMany({
+    where: { userId, itemType: query.itemType },
     orderBy: { createdAt: 'desc' },
+    take: limit + 1,
+    ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
   });
+
+  return paginate(rows, limit);
 }
 
 export async function addFavourite(userId: string, input: CreateFavouriteInput) {

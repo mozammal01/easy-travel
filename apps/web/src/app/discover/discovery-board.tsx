@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { TRAVEL_INTERESTS, type DiscoveryCategory, type DiscoveryItemDto } from '@meghjatra/shared';
 import { useAuth } from '@/contexts/auth-context';
@@ -50,7 +51,7 @@ export function DiscoveryBoard() {
   useEffect(() => {
     if (!user || !accessToken) return;
     apiClient
-      .get<{ favourites: { itemRef: string }[] }>('/favourites', {
+      .get<{ favourites: { itemRef: string }[] }>('/favourites?limit=100', {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then(({ favourites }) => setFavouriteRefs(new Set(favourites.map((f) => f.itemRef))))
@@ -123,6 +124,11 @@ export function DiscoveryBoard() {
 
   return (
     <div className="flex flex-col gap-6">
+      {user && (
+        <Button variant="ghost" size="sm" className="self-end" render={<Link href="/favourites" />}>
+          View my wishlist
+        </Button>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Search a destination</CardTitle>

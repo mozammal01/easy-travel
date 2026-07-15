@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import {
   createFavouriteInputSchema,
+  listFavouritesQuerySchema,
   removeFavouriteQuerySchema,
+  type ListFavouritesQuery,
   type RemoveFavouriteQuery,
 } from '@meghjatra/shared';
 import { requireAuth } from '../middleware/requireAuth';
@@ -15,9 +17,11 @@ export const favouritesRouter = Router();
 favouritesRouter.get(
   '/',
   requireAuth,
+  validateQuery(listFavouritesQuerySchema),
   asyncHandler(async (req, res) => {
-    const favourites = await listFavourites(req.userId!);
-    res.json({ favourites: favourites.map(toFavouriteDto) });
+    const query = req.query as unknown as ListFavouritesQuery;
+    const { items, nextCursor } = await listFavourites(req.userId!, query);
+    res.json({ favourites: items.map(toFavouriteDto), nextCursor });
   }),
 );
 

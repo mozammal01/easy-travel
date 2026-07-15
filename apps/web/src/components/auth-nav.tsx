@@ -27,6 +27,9 @@ export function AuthNav() {
       <Button variant="ghost" render={<Link href="/trips" />}>
         My trips
       </Button>
+      <Button variant="ghost" render={<Link href="/favourites" />}>
+        Wishlist
+      </Button>
       <Button variant="ghost" render={<Link href="/profile" />}>
         Hi, {user.displayName}
       </Button>

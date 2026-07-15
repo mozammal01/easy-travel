@@ -24,3 +24,16 @@ export const removeFavouriteQuerySchema = z.object({
   itemRef: z.string().min(1).max(200),
 });
 export type RemoveFavouriteQuery = z.infer<typeof removeFavouriteQuerySchema>;
+
+export const listFavouritesQuerySchema = z.object({
+  itemType: favouriteItemTypeSchema.optional(),
+  cursor: z.string().uuid().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+});
+export type ListFavouritesQuery = z.infer<typeof listFavouritesQuerySchema>;
+
+export const favouriteListResponseSchema = z.object({
+  favourites: z.array(favouriteSchema),
+  nextCursor: z.string().uuid().nullable(),
+});
+export type FavouriteListResponse = z.infer<typeof favouriteListResponseSchema>;
