@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { MapPin } from 'lucide-react';
 import { TRAVEL_INTERESTS, type DestinationRecommendation } from '@meghjatra/shared';
 import { apiClient, ApiError } from '@/lib/api-client';
@@ -176,6 +177,18 @@ function DestinationCard({ destination }: { destination: DestinationRecommendati
             </Badge>
           ))}
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="self-start"
+          render={
+            <Link
+              href={`/trips/new?destination=${encodeURIComponent(`${destination.destination}, ${destination.country}`)}`}
+            />
+          }
+        >
+          Plan a trip here
+        </Button>
       </CardContent>
     </Card>
   );

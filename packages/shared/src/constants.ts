@@ -12,3 +12,6 @@ export const TRAVEL_INTERESTS = [
 ] as const;
 
 export type TravelInterest = (typeof TRAVEL_INTERESTS)[number];
+
+export const CURRENCIES = ['USD', 'EUR', 'GBP', 'BDT', 'INR', 'JPY', 'AUD', 'CAD'] as const;
+export type Currency = (typeof CURRENCIES)[number];
