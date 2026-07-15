@@ -30,6 +30,9 @@ export default function Home() {
           <Button variant="outline" render={<Link href="/discover" />}>
             Discover food & attractions
           </Button>
+          <Button variant="outline" render={<Link href="/reviews" />}>
+            Read traveler reviews
+          </Button>
         </CardContent>
       </Card>
     </main>
