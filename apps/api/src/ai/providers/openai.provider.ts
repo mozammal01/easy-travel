@@ -1,4 +1,4 @@
-import type { AccommodationRequest, CreateTripInput, DestinationRecommendation, DiscoveryRequest, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
+import type { AccommodationRequest, ChatContext, ChatMessage, CreateTripInput, DestinationRecommendation, DiscoveryRequest, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
 import type { AiProvider } from '../types';
 import { buildRecommendationPrompt, parseRecommendationResponse } from '../prompt';
 import { buildItineraryPrompt, parseItineraryResponse } from '../itineraryPrompt';
@@ -12,6 +12,7 @@ import {
   parseDiscoveryResponse,
   type GeneratedDiscoveryItem,
 } from '../discoveryPrompt';
+import { buildChatPrompt } from '../chatPrompt';
 import { AI_REQUEST_TIMEOUT_MS } from '../constants';
 import { env } from '../../config/env';
 import { HttpError } from '../../middleware/errorHandler';
@@ -55,11 +56,18 @@ export class OpenAiProvider implements AiProvider {
     return parseDiscoveryResponse(text);
   }
 
-  private async callOpenAi(prompt: string): Promise<string> {
+  async chat(messages: ChatMessage[], context?: ChatContext): Promise<string> {
+    const prompt = buildChatPrompt(messages, context);
+    const text = await this.callOpenAi(prompt, { json: false });
+    return text.trim();
+  }
+
+  private async callOpenAi(prompt: string, options?: { json?: boolean }): Promise<string> {
     if (!env.OPENAI_API_KEY) {
       throw new HttpError(503, 'AI provider is not configured (missing OPENAI_API_KEY)');
     }
 
+    const json = options?.json ?? true;
     const res = await fetch(`${OPENAI_API_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -69,7 +77,7 @@ export class OpenAiProvider implements AiProvider {
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
+        ...(json ? { response_format: { type: 'json_object' } } : {}),
       }),
       signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
     });

@@ -1,4 +1,4 @@
-import type { AccommodationRequest, CreateTripInput, DestinationRecommendation, DiscoveryRequest, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
+import type { AccommodationRequest, ChatContext, ChatMessage, CreateTripInput, DestinationRecommendation, DiscoveryRequest, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
 import type { AiProvider } from '../types';
 import { buildRecommendationPrompt, parseRecommendationResponse } from '../prompt';
 import { buildItineraryPrompt, parseItineraryResponse } from '../itineraryPrompt';
@@ -12,6 +12,7 @@ import {
   parseDiscoveryResponse,
   type GeneratedDiscoveryItem,
 } from '../discoveryPrompt';
+import { buildChatPrompt } from '../chatPrompt';
 import { AI_REQUEST_TIMEOUT_MS } from '../constants';
 import { env } from '../../config/env';
 import { HttpError } from '../../middleware/errorHandler';
@@ -55,11 +56,18 @@ export class GeminiProvider implements AiProvider {
     return parseDiscoveryResponse(text);
   }
 
-  private async callGemini(prompt: string): Promise<string> {
+  async chat(messages: ChatMessage[], context?: ChatContext): Promise<string> {
+    const prompt = buildChatPrompt(messages, context);
+    const text = await this.callGemini(prompt, { json: false });
+    return text.trim();
+  }
+
+  private async callGemini(prompt: string, options?: { json?: boolean }): Promise<string> {
     if (!env.GEMINI_API_KEY) {
       throw new HttpError(503, 'AI provider is not configured (missing GEMINI_API_KEY)');
     }
 
+    const json = options?.json ?? true;
     const res = await fetch(
       `${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`,
       {
@@ -67,7 +75,7 @@ export class GeminiProvider implements AiProvider {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
+          ...(json ? { generationConfig: { responseMimeType: 'application/json' } } : {}),
         }),
         signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
       },

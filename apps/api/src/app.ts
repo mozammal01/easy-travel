@@ -15,6 +15,8 @@ import { discoveryRouter } from './routes/discovery';
 import { favouritesRouter } from './routes/favourites';
 import { reviewsRouter } from './routes/reviews';
 import { adminRouter } from './routes/admin';
+import { chatRouter } from './routes/chat';
+import { weatherRouter } from './routes/weather';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -39,6 +41,8 @@ export function createApp(): Express {
   app.use('/favourites', favouritesRouter);
   app.use('/reviews', reviewsRouter);
   app.use('/admin', adminRouter);
+  app.use('/chat', chatRouter);
+  app.use('/weather', weatherRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

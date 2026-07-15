@@ -1,5 +1,7 @@
 import type {
   AccommodationRequest,
+  ChatContext,
+  ChatMessage,
   CreateTripInput,
   DestinationRecommendation,
   DiscoveryRequest,
@@ -18,4 +20,5 @@ export interface AiProvider {
     input: AccommodationRequest,
   ): Promise<GeneratedAccommodation[]>;
   getDiscoveryItems(input: DiscoveryRequest): Promise<GeneratedDiscoveryItem[]>;
+  chat(messages: ChatMessage[], context?: ChatContext): Promise<string>;
 }

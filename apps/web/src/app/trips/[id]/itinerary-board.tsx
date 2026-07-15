@@ -28,6 +28,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { WeatherWidget } from '@/components/weather-widget';
+import { MapEmbed } from '@/components/map-embed';
 
 const TIME_BLOCKS = ['morning', 'afternoon', 'evening'] as const;
 type TimeBlock = (typeof TIME_BLOCKS)[number];
@@ -252,6 +254,18 @@ export function ItineraryBoard({ tripId }: { tripId: string }) {
         <SaveIndicator status={saveStatus} />
       </div>
 
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <WeatherWidget destination={trip.destination} />
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle className="text-base">Map</CardTitle>
+          </CardHeader>
+          <CardContent className="h-56 p-0">
+            <MapEmbed query={trip.destination} />
+          </CardContent>
+        </Card>
+      </div>
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {dayGroups.map((day) => (
@@ -329,6 +343,17 @@ function SortableItemCard({ item }: { item: ItineraryItemDto }) {
         {item.durationMin} min · {item.cost}
       </p>
       {item.tips && <p className="mt-1 text-xs text-muted-foreground">Tip: {item.tips}</p>}
+      {item.mapLink && (
+        <a
+          href={`https://maps.google.com/maps?q=${encodeURIComponent(item.mapLink)}`}
+          target="_blank"
+          rel="noreferrer"
+          onPointerDown={(e) => e.stopPropagation()}
+          className="mt-1 inline-block text-xs text-primary underline"
+        >
+          View on map ↗
+        </a>
+      )}
     </div>
   );
 }

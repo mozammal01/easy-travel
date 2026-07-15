@@ -9,4 +9,6 @@ export * from './schemas/accommodation';
 export * from './schemas/discovery';
 export * from './schemas/favourite';
 export * from './schemas/admin';
+export * from './schemas/chat';
+export * from './schemas/weather';
 export * from './constants';
