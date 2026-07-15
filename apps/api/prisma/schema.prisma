@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum TripStatus {
+  DRAFT
+  UPCOMING
+  COMPLETED
+  ARCHIVED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?
+  displayName  String
+  avatarUrl    String?
+  interests    String[]
+  currency     String   @default("USD")
+  language     String   @default("en")
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  deletedAt    DateTime?
+
+  trips      Trip[]
+  reviews    Review[]
+  favourites Favourite[]
+}
+
+model Trip {
+  id              String     @id @default(uuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id])
+  destination     String
+  startDate       DateTime
+  endDate         DateTime
+  travelers       Int
+  budgetTotal     Decimal    @db.Decimal(10, 2)
+  budgetCurrency  String
+  budgetBreakdown Json
+  itinerary       DayPlan[]
+  accommodation   Json?
+  status          TripStatus @default(DRAFT)
+  shareToken      String?    @unique
+  createdAt       DateTime   @default(now())
+  deletedAt       DateTime?
+
+  @@index([userId])
+}
+
+model DayPlan {
+  id       String @id @default(uuid())
+  tripId   String
+  trip     Trip   @relation(fields: [tripId], references: [id])
+  dayIndex Int
+
+  items ItineraryItem[]
+
+  @@index([tripId])
+}
+
+model ItineraryItem {
+  id           String   @id @default(uuid())
+  dayPlanId    String
+  dayPlan      DayPlan  @relation(fields: [dayPlanId], references: [id])
+  timeBlock    String
+  order        Int
+  activityName String
+  durationMin  Int
+  cost         Decimal  @db.Decimal(10, 2)
+  mapLink      String?
+  tips         String?
+
+  @@index([dayPlanId])
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  destination   String
+  rating        Int
+  text          String
+  helpfulCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  editableUntil DateTime
+  flagged       Boolean  @default(false)
+
+  @@unique([userId, destination])
+}
+
+model Favourite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  itemType  String
+  itemRef   String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, itemType, itemRef])
+}
+
+model Destination {
+  id           String   @id @default(uuid())
+  name         String
+  country      String
+  region       String?
+  description  String?
+  heroImageUrl String?
+  budgetLevel  String?
+  bestSeason   String?
+  tags         String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([name, country])
+}
