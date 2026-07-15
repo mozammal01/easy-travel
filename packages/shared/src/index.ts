@@ -1,1 +1,4 @@
-export const SHARED_PACKAGE_NAME = '@meghjatra/shared';
+export * from './schemas/enums';
+export * from './schemas/user';
+export * from './schemas/trip';
+export * from './schemas/review';
