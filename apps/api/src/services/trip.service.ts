@@ -1,4 +1,8 @@
-import type { CreateTripInput, UpdateItineraryItemInput } from '@meghjatra/shared';
+import type {
+  CreateItineraryItemInput,
+  CreateTripInput,
+  UpdateItineraryItemInput,
+} from '@meghjatra/shared';
 import { prisma } from '../lib/prisma';
 import { getAiProvider } from '../ai';
 import { HttpError } from '../middleware/errorHandler';
@@ -117,6 +121,50 @@ export async function updateItineraryItem(
       order: input.order,
     },
   });
+
+  return getTripForUser(userId, tripId);
+}
+
+export async function addItineraryItem(
+  userId: string,
+  tripId: string,
+  input: CreateItineraryItemInput,
+) {
+  const trip = await getTripForUser(userId, tripId);
+  const targetDay = trip.itinerary.find((day) => day.id === input.dayPlanId);
+  if (!targetDay) {
+    throw new HttpError(400, 'Invalid dayPlanId for this trip');
+  }
+
+  const siblingOrders = targetDay.items
+    .filter((item) => item.timeBlock === input.timeBlock)
+    .map((item) => item.order);
+  const nextOrder = siblingOrders.length > 0 ? Math.max(...siblingOrders) + 1 : 0;
+
+  await prisma.itineraryItem.create({
+    data: {
+      dayPlanId: input.dayPlanId,
+      timeBlock: input.timeBlock,
+      order: nextOrder,
+      activityName: input.activityName,
+      durationMin: input.durationMin,
+      cost: input.cost,
+      mapLink: input.mapLink ?? undefined,
+      tips: input.tips ?? undefined,
+    },
+  });
+
+  return getTripForUser(userId, tripId);
+}
+
+export async function removeItineraryItem(userId: string, tripId: string, itemId: string) {
+  const trip = await getTripForUser(userId, tripId);
+  const item = trip.itinerary.flatMap((day) => day.items).find((i) => i.id === itemId);
+  if (!item) {
+    throw new HttpError(404, 'Itinerary item not found');
+  }
+
+  await prisma.itineraryItem.delete({ where: { id: itemId } });
 
   return getTripForUser(userId, tripId);
 }
