@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  accommodationSchema,
   createItineraryItemInputSchema,
   createTripInputSchema,
   updateItineraryItemInputSchema,
@@ -14,6 +15,7 @@ import {
   generateTripItinerary,
   getTripForUser,
   listTrips,
+  pinAccommodation,
   removeItineraryItem,
   softDeleteTrip,
   updateItineraryItem,
@@ -65,6 +67,16 @@ tripsRouter.get(
   asyncHandler(async (req, res) => {
     const budget = await calculateTripBudget(req.userId!, req.params.id);
     res.json({ budget });
+  }),
+);
+
+tripsRouter.post(
+  '/:id/accommodation',
+  requireAuth,
+  validateBody(accommodationSchema),
+  asyncHandler(async (req, res) => {
+    const trip = await pinAccommodation(req.userId!, req.params.id, req.body);
+    res.json({ trip: toTripDto(trip) });
   }),
 );
 

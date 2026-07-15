@@ -1,4 +1,5 @@
 import type {
+  AccommodationDto,
   BudgetBreakdown,
   BudgetCategory,
   BudgetSummary,
@@ -146,6 +147,19 @@ export async function duplicateTrip(userId: string, tripId: string) {
   });
 }
 
+export async function pinAccommodation(
+  userId: string,
+  tripId: string,
+  accommodation: AccommodationDto,
+) {
+  await getTripForUser(userId, tripId);
+  return prisma.trip.update({
+    where: { id: tripId },
+    data: { accommodation: accommodation as object },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
+  });
+}
+
 export async function softDeleteTrip(userId: string, tripId: string): Promise<void> {
   await getTripForUser(userId, tripId);
   await prisma.trip.update({
@@ -239,9 +253,10 @@ export async function calculateTripBudget(userId: string, tripId: string): Promi
     }
   }
 
-  const accommodation = trip.accommodation as { price?: number } | null;
-  if (accommodation && typeof accommodation.price === 'number') {
-    breakdown.stay += accommodation.price;
+  const accommodation = trip.accommodation as { pricePerNight?: number } | null;
+  if (accommodation && typeof accommodation.pricePerNight === 'number') {
+    const nights = Math.max(1, computeTotalDays(trip.startDate, trip.endDate) - 1);
+    breakdown.stay += accommodation.pricePerNight * nights;
   }
 
   const totalSpend = Object.values(breakdown).reduce((sum, value) => sum + value, 0);
