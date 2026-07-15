@@ -1,8 +1,10 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import { healthRouter } from './routes/health';
+import { authRouter } from './routes/auth';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -11,9 +13,11 @@ export function createApp(): Express {
 
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
+  app.use(cookieParser());
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
   app.use('/health', healthRouter);
+  app.use('/auth', authRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
