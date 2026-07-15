@@ -2,10 +2,12 @@ import type {
   AccommodationRequest,
   CreateTripInput,
   DestinationRecommendation,
+  DiscoveryRequest,
   GeneratedDayPlan,
   RecommendationRequest,
 } from '@meghjatra/shared';
 import type { GeneratedAccommodation } from './accommodationPrompt';
+import type { GeneratedDiscoveryItem } from './discoveryPrompt';
 
 export interface AiProvider {
   getDestinationRecommendations(
@@ -15,4 +17,5 @@ export interface AiProvider {
   getAccommodationRecommendations(
     input: AccommodationRequest,
   ): Promise<GeneratedAccommodation[]>;
+  getDiscoveryItems(input: DiscoveryRequest): Promise<GeneratedDiscoveryItem[]>;
 }

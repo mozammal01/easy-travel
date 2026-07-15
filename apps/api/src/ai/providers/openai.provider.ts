@@ -1,4 +1,4 @@
-import type { AccommodationRequest, CreateTripInput, DestinationRecommendation, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
+import type { AccommodationRequest, CreateTripInput, DestinationRecommendation, DiscoveryRequest, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
 import type { AiProvider } from '../types';
 import { buildRecommendationPrompt, parseRecommendationResponse } from '../prompt';
 import { buildItineraryPrompt, parseItineraryResponse } from '../itineraryPrompt';
@@ -7,6 +7,11 @@ import {
   parseAccommodationResponse,
   type GeneratedAccommodation,
 } from '../accommodationPrompt';
+import {
+  buildDiscoveryPrompt,
+  parseDiscoveryResponse,
+  type GeneratedDiscoveryItem,
+} from '../discoveryPrompt';
 import { AI_REQUEST_TIMEOUT_MS } from '../constants';
 import { env } from '../../config/env';
 import { HttpError } from '../../middleware/errorHandler';
@@ -42,6 +47,12 @@ export class OpenAiProvider implements AiProvider {
     const prompt = buildAccommodationPrompt(input);
     const text = await this.callOpenAi(prompt);
     return parseAccommodationResponse(text);
+  }
+
+  async getDiscoveryItems(input: DiscoveryRequest): Promise<GeneratedDiscoveryItem[]> {
+    const prompt = buildDiscoveryPrompt(input);
+    const text = await this.callOpenAi(prompt);
+    return parseDiscoveryResponse(text);
   }
 
   private async callOpenAi(prompt: string): Promise<string> {

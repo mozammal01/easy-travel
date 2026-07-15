@@ -22,10 +22,13 @@ export default function Home() {
             AI-recommended destinations, day-by-day itineraries, and budget tracking.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-3">
+        <CardContent className="flex flex-wrap gap-3">
           <Button render={<Link href="/destinations" />}>Get recommendations</Button>
           <Button variant="outline" render={<Link href="/trips/new" />}>
             Plan a new trip
+          </Button>
+          <Button variant="outline" render={<Link href="/discover" />}>
+            Discover food & attractions
           </Button>
         </CardContent>
       </Card>

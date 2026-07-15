@@ -6,4 +6,6 @@ export * from './schemas/auth';
 export * from './schemas/recommendation';
 export * from './schemas/destination';
 export * from './schemas/accommodation';
+export * from './schemas/discovery';
+export * from './schemas/favourite';
 export * from './constants';

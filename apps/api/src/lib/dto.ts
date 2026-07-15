@@ -1,5 +1,11 @@
-import type { DayPlan, ItineraryItem, Trip, User } from '@prisma/client';
-import type { BudgetBreakdown, ItineraryItemDto, TripDto, UserDto } from '@meghjatra/shared';
+import type { DayPlan, Favourite, ItineraryItem, Trip, User } from '@prisma/client';
+import type {
+  BudgetBreakdown,
+  FavouriteDto,
+  ItineraryItemDto,
+  TripDto,
+  UserDto,
+} from '@meghjatra/shared';
 
 export function toUserDto(user: User): UserDto {
   return {
@@ -49,5 +55,15 @@ export function toTripDto(trip: TripWithItinerary): TripDto {
     status: trip.status,
     shareToken: trip.shareToken,
     createdAt: trip.createdAt,
+  };
+}
+
+export function toFavouriteDto(favourite: Favourite): FavouriteDto {
+  return {
+    id: favourite.id,
+    itemType: favourite.itemType as FavouriteDto['itemType'],
+    itemRef: favourite.itemRef,
+    metadata: favourite.metadata as Record<string, unknown> | null,
+    createdAt: favourite.createdAt,
   };
 }

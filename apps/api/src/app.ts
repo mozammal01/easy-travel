@@ -11,6 +11,8 @@ import { recommendationsRouter } from './routes/recommendations';
 import { destinationsRouter } from './routes/destinations';
 import { tripsRouter } from './routes/trips';
 import { accommodationsRouter } from './routes/accommodations';
+import { discoveryRouter } from './routes/discovery';
+import { favouritesRouter } from './routes/favourites';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -31,6 +33,8 @@ export function createApp(): Express {
   app.use('/destinations', destinationsRouter);
   app.use('/trips', tripsRouter);
   app.use('/accommodations', accommodationsRouter);
+  app.use('/discovery', discoveryRouter);
+  app.use('/favourites', favouritesRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

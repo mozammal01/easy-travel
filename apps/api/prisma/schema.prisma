@@ -112,6 +112,7 @@ model Favourite {
   user      User     @relation(fields: [userId], references: [id])
   itemType  String
   itemRef   String
+  metadata  Json?
   createdAt DateTime @default(now())
 
   @@unique([userId, itemType, itemRef])
