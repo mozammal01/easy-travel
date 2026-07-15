@@ -1,4 +1,5 @@
 import { recommendationResponseSchema, type DestinationRecommendation, type RecommendationRequest } from '@meghjatra/shared';
+import { extractJson } from './extractJson';
 
 export function buildRecommendationPrompt(input: RecommendationRequest): string {
   const lines = [
@@ -31,10 +32,4 @@ export function parseRecommendationResponse(raw: string): DestinationRecommendat
   }
 
   return [...result.data.recommendations].sort((a, b) => b.confidence - a.confidence);
-}
-
-function extractJson(text: string): string {
-  const trimmed = text.trim();
-  const fencedMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  return fencedMatch ? fencedMatch[1].trim() : trimmed;
 }

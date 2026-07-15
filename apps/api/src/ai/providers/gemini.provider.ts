@@ -1,6 +1,8 @@
-import type { DestinationRecommendation, RecommendationRequest } from '@meghjatra/shared';
+import type { CreateTripInput, DestinationRecommendation, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
 import type { AiProvider } from '../types';
 import { buildRecommendationPrompt, parseRecommendationResponse } from '../prompt';
+import { buildItineraryPrompt, parseItineraryResponse } from '../itineraryPrompt';
+import { AI_REQUEST_TIMEOUT_MS } from '../constants';
 import { env } from '../../config/env';
 import { HttpError } from '../../middleware/errorHandler';
 
@@ -15,11 +17,25 @@ export class GeminiProvider implements AiProvider {
   async getDestinationRecommendations(
     input: RecommendationRequest,
   ): Promise<DestinationRecommendation[]> {
+    const prompt = buildRecommendationPrompt(input);
+    const text = await this.callGemini(prompt);
+    return parseRecommendationResponse(text);
+  }
+
+  async generateItinerary(
+    input: CreateTripInput,
+    totalDays: number,
+  ): Promise<GeneratedDayPlan[]> {
+    const prompt = buildItineraryPrompt(input, totalDays);
+    const text = await this.callGemini(prompt);
+    return parseItineraryResponse(text, totalDays);
+  }
+
+  private async callGemini(prompt: string): Promise<string> {
     if (!env.GEMINI_API_KEY) {
       throw new HttpError(503, 'AI provider is not configured (missing GEMINI_API_KEY)');
     }
 
-    const prompt = buildRecommendationPrompt(input);
     const res = await fetch(
       `${GEMINI_API_BASE}/models/${GEMINI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`,
       {
@@ -29,6 +45,7 @@ export class GeminiProvider implements AiProvider {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: { responseMimeType: 'application/json' },
         }),
+        signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
       },
     );
 
@@ -43,6 +60,6 @@ export class GeminiProvider implements AiProvider {
       throw new HttpError(502, 'Gemini API returned an unexpected response shape');
     }
 
-    return parseRecommendationResponse(text);
+    return text;
   }
 }

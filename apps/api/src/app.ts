@@ -9,6 +9,7 @@ import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
 import { recommendationsRouter } from './routes/recommendations';
 import { destinationsRouter } from './routes/destinations';
+import { tripsRouter } from './routes/trips';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -27,6 +28,7 @@ export function createApp(): Express {
   app.use('/users', usersRouter);
   app.use('/recommendations', recommendationsRouter);
   app.use('/destinations', destinationsRouter);
+  app.use('/trips', tripsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

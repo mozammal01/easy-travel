@@ -1,6 +1,8 @@
-import type { DestinationRecommendation, RecommendationRequest } from '@meghjatra/shared';
+import type { CreateTripInput, DestinationRecommendation, GeneratedDayPlan, RecommendationRequest } from '@meghjatra/shared';
 import type { AiProvider } from '../types';
 import { buildRecommendationPrompt, parseRecommendationResponse } from '../prompt';
+import { buildItineraryPrompt, parseItineraryResponse } from '../itineraryPrompt';
+import { AI_REQUEST_TIMEOUT_MS } from '../constants';
 import { env } from '../../config/env';
 import { HttpError } from '../../middleware/errorHandler';
 
@@ -15,11 +17,25 @@ export class OpenAiProvider implements AiProvider {
   async getDestinationRecommendations(
     input: RecommendationRequest,
   ): Promise<DestinationRecommendation[]> {
+    const prompt = buildRecommendationPrompt(input);
+    const text = await this.callOpenAi(prompt);
+    return parseRecommendationResponse(text);
+  }
+
+  async generateItinerary(
+    input: CreateTripInput,
+    totalDays: number,
+  ): Promise<GeneratedDayPlan[]> {
+    const prompt = buildItineraryPrompt(input, totalDays);
+    const text = await this.callOpenAi(prompt);
+    return parseItineraryResponse(text, totalDays);
+  }
+
+  private async callOpenAi(prompt: string): Promise<string> {
     if (!env.OPENAI_API_KEY) {
       throw new HttpError(503, 'AI provider is not configured (missing OPENAI_API_KEY)');
     }
 
-    const prompt = buildRecommendationPrompt(input);
     const res = await fetch(`${OPENAI_API_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -31,6 +47,7 @@ export class OpenAiProvider implements AiProvider {
         messages: [{ role: 'user', content: prompt }],
         response_format: { type: 'json_object' },
       }),
+      signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
     });
 
     if (!res.ok) {
@@ -44,6 +61,6 @@ export class OpenAiProvider implements AiProvider {
       throw new HttpError(502, 'OpenAI API returned an unexpected response shape');
     }
 
-    return parseRecommendationResponse(text);
+    return text;
   }
 }
