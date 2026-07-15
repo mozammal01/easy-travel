@@ -3,7 +3,16 @@ import type { LoginInput, RegisterInput, UserDto } from '@meghjatra/shared';
 import { prisma } from '../lib/prisma';
 import { hashPassword, comparePassword } from '../lib/password';
 import { signAccessToken, signRefreshToken } from '../lib/jwt';
+import { generateResetToken, hashResetToken } from '../lib/resetToken';
+import { env } from '../config/env';
 import { HttpError } from '../middleware/errorHandler';
+
+const PASSWORD_RESET_TTL_MS = 15 * 60 * 1000;
+
+function sendPasswordResetEmail(email: string, rawToken: string) {
+  const resetLink = `${env.CORS_ORIGIN}/reset-password?token=${rawToken}`;
+  console.log(`[email:stub] Password reset link for ${email}: ${resetLink}`);
+}
 
 function toUserDto(user: User): UserDto {
   return {
@@ -67,4 +76,48 @@ export async function refreshSession(userId: string) {
   }
 
   return issueSession(user);
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  // Always behave the same way regardless of whether the account exists, to avoid user enumeration.
+  if (!user || user.deletedAt) {
+    return;
+  }
+
+  const { rawToken, tokenHash } = generateResetToken();
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
+    },
+  });
+
+  sendPasswordResetEmail(user.email, rawToken);
+}
+
+export async function resetPassword(rawToken: string, newPassword: string): Promise<void> {
+  const tokenHash = hashResetToken(rawToken);
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: { gt: new Date() },
+    },
+  });
+
+  if (!user) {
+    throw new HttpError(400, 'Invalid or expired reset token');
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null,
+    },
+  });
 }

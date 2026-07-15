@@ -33,9 +33,14 @@ model User {
   createdAt    DateTime @default(now())
   deletedAt    DateTime?
 
+  passwordResetTokenHash  String?
+  passwordResetExpiresAt  DateTime?
+
   trips      Trip[]
   reviews    Review[]
   favourites Favourite[]
+
+  @@index([passwordResetTokenHash])
 }
 
 model Trip {

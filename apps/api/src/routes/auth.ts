@@ -1,8 +1,19 @@
 import { Response, Router } from 'express';
-import { loginInputSchema, registerInputSchema } from '@meghjatra/shared';
+import {
+  forgotPasswordInputSchema,
+  loginInputSchema,
+  registerInputSchema,
+  resetPasswordInputSchema,
+} from '@meghjatra/shared';
 import { validateBody } from '../middleware/validate';
 import { asyncHandler } from '../lib/asyncHandler';
-import { loginUser, refreshSession, registerUser } from '../services/auth.service';
+import {
+  loginUser,
+  refreshSession,
+  registerUser,
+  requestPasswordReset,
+  resetPassword,
+} from '../services/auth.service';
 import { verifyRefreshToken } from '../lib/jwt';
 import { HttpError } from '../middleware/errorHandler';
 import { env } from '../config/env';
@@ -68,3 +79,21 @@ authRouter.post('/logout', (_req, res) => {
   res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
   res.status(204).send();
 });
+
+authRouter.post(
+  '/forgot-password',
+  validateBody(forgotPasswordInputSchema),
+  asyncHandler(async (req, res) => {
+    await requestPasswordReset(req.body.email);
+    res.json({ message: 'If that email exists, a reset link has been sent.' });
+  }),
+);
+
+authRouter.post(
+  '/reset-password',
+  validateBody(resetPasswordInputSchema),
+  asyncHandler(async (req, res) => {
+    await resetPassword(req.body.token, req.body.newPassword);
+    res.json({ message: 'Password has been reset successfully.' });
+  }),
+);

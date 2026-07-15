@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import { healthRouter } from './routes/health';
 import { authRouter } from './routes/auth';
+import { usersRouter } from './routes/users';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -18,6 +19,7 @@ export function createApp(): Express {
 
   app.use('/health', healthRouter);
   app.use('/auth', authRouter);
+  app.use('/users', usersRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
