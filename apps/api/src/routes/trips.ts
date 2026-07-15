@@ -6,6 +6,7 @@ import {
   updateItineraryItemInputSchema,
 } from '@meghjatra/shared';
 import { requireAuth } from '../middleware/requireAuth';
+import { aiRateLimit } from '../middleware/rateLimit';
 import { validateBody } from '../middleware/validate';
 import { asyncHandler } from '../lib/asyncHandler';
 import {
@@ -40,6 +41,7 @@ tripsRouter.get(
 tripsRouter.post(
   '/',
   requireAuth,
+  aiRateLimit,
   validateBody(createTripInputSchema),
   asyncHandler(async (req, res) => {
     const trip = await generateTripItinerary(req.userId!, req.body);

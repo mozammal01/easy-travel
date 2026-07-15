@@ -3,6 +3,8 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import compression from 'compression';
 import { env } from './config/env';
 import { healthRouter } from './routes/health';
 import { authRouter } from './routes/auth';
@@ -19,29 +21,35 @@ import { chatRouter } from './routes/chat';
 import { weatherRouter } from './routes/weather';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
+import { aiRateLimit, authRateLimit, globalRateLimit } from './middleware/rateLimit';
 
 export function createApp(): Express {
   const app = express();
 
+  app.set('trust proxy', 1);
+
+  app.use(helmet());
+  app.use(compression());
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
   app.use(express.json());
   app.use(cookieParser());
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+  app.use(globalRateLimit);
 
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   app.use('/health', healthRouter);
-  app.use('/auth', authRouter);
+  app.use('/auth', authRateLimit, authRouter);
   app.use('/users', usersRouter);
-  app.use('/recommendations', recommendationsRouter);
+  app.use('/recommendations', aiRateLimit, recommendationsRouter);
   app.use('/destinations', destinationsRouter);
   app.use('/trips', tripsRouter);
-  app.use('/accommodations', accommodationsRouter);
-  app.use('/discovery', discoveryRouter);
+  app.use('/accommodations', aiRateLimit, accommodationsRouter);
+  app.use('/discovery', aiRateLimit, discoveryRouter);
   app.use('/favourites', favouritesRouter);
   app.use('/reviews', reviewsRouter);
   app.use('/admin', adminRouter);
-  app.use('/chat', chatRouter);
+  app.use('/chat', aiRateLimit, chatRouter);
   app.use('/weather', weatherRouter);
 
   app.use(notFoundHandler);
