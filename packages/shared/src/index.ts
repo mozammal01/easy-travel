@@ -4,3 +4,4 @@ export * from './schemas/trip';
 export * from './schemas/review';
 export * from './schemas/auth';
 export * from './schemas/recommendation';
+export * from './constants';

@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updateProfileInputSchema, type UpdateProfileInput, type UserDto } from '@meghjatra/shared';
+import {
+  TRAVEL_INTERESTS,
+  updateProfileInputSchema,
+  type UpdateProfileInput,
+  type UserDto,
+} from '@meghjatra/shared';
 import { useAuth } from '@/contexts/auth-context';
 import { ProtectedRoute } from '@/components/protected-route';
 import { apiClient, ApiError, API_URL } from '@/lib/api-client';
@@ -30,19 +35,6 @@ const LANGUAGES = [
   { value: 'es', label: 'Spanish' },
   { value: 'fr', label: 'French' },
   { value: 'hi', label: 'Hindi' },
-];
-
-const INTERESTS = [
-  'Beach',
-  'Mountains',
-  'Culture',
-  'Food',
-  'Nightlife',
-  'Adventure',
-  'Relaxation',
-  'Wildlife',
-  'History',
-  'Shopping',
 ];
 
 function ProfileForm() {
@@ -245,7 +237,7 @@ function ProfileForm() {
                 <FormItem>
                   <FormLabel>Travel interests</FormLabel>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {INTERESTS.map((interest) => {
+                    {TRAVEL_INTERESTS.map((interest) => {
                       const current = field.value ?? [];
                       const checked = current.includes(interest);
                       return (

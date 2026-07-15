@@ -1,6 +1,6 @@
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { AuthNav } from '@/components/auth-nav';
 
@@ -22,9 +22,8 @@ export default function Home() {
             AI-recommended destinations, day-by-day itineraries, and budget tracking.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:flex-row">
-          <Input placeholder="e.g. beach, budget-friendly, 5 days" />
-          <Button>Get recommendations</Button>
+        <CardContent>
+          <Button render={<Link href="/destinations" />}>Get recommendations</Button>
         </CardContent>
       </Card>
     </main>
