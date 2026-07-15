@@ -30,6 +30,11 @@ export function AuthNav() {
       <Button variant="ghost" render={<Link href="/favourites" />}>
         Wishlist
       </Button>
+      {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
+        <Button variant="ghost" render={<Link href="/admin" />}>
+          Admin
+        </Button>
+      )}
       <Button variant="ghost" render={<Link href="/profile" />}>
         Hi, {user.displayName}
       </Button>
