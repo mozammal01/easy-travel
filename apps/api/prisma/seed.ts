@@ -2,9 +2,19 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+function placeholderImages(slug: string, count: number): { hero: string; gallery: string[] } {
+  return {
+    hero: `https://picsum.photos/seed/${slug}/1200/675`,
+    gallery: Array.from(
+      { length: count },
+      (_, i) => `https://picsum.photos/seed/${slug}-${i + 1}/800/600`,
+    ),
+  };
+}
+
 const demoDestinations = [
   {
-    name: 'Cox\'s Bazar',
+    name: "Cox's Bazar",
     country: 'Bangladesh',
     region: 'Chittagong Division',
     description: "The world's longest natural sea beach, known for its golden sands and sunsets.",
@@ -48,14 +58,67 @@ const demoDestinations = [
     bestSeason: 'June to September',
     tags: ['mountains', 'skiing', 'scenery'],
   },
+  {
+    name: 'Reykjavik',
+    country: 'Iceland',
+    region: 'Capital Region',
+    description: 'Gateway to glaciers, geysers, and the northern lights.',
+    budgetLevel: 'luxury',
+    bestSeason: 'June to August',
+    tags: ['nature', 'adventure', 'scenery'],
+  },
+  {
+    name: 'Marrakech',
+    country: 'Morocco',
+    region: 'Marrakech-Safi',
+    description: 'Bustling souks, ornate palaces, and the gateway to the Sahara.',
+    budgetLevel: 'mid-range',
+    bestSeason: 'October to April',
+    tags: ['culture', 'history', 'shopping'],
+  },
+  {
+    name: 'Queenstown',
+    country: 'New Zealand',
+    region: 'Otago',
+    description: 'Adventure capital with bungee jumping, hiking, and alpine lakes.',
+    budgetLevel: 'luxury',
+    bestSeason: 'December to February',
+    tags: ['adventure', 'mountains', 'nature'],
+  },
+  {
+    name: 'Santorini',
+    country: 'Greece',
+    region: 'South Aegean',
+    description: 'Whitewashed cliffside villages overlooking the caldera.',
+    budgetLevel: 'luxury',
+    bestSeason: 'April to October',
+    tags: ['beach', 'romance', 'scenery'],
+  },
+  {
+    name: 'Cusco',
+    country: 'Peru',
+    region: 'Cusco Region',
+    description: 'Former Incan capital and gateway to Machu Picchu.',
+    budgetLevel: 'mid-range',
+    bestSeason: 'May to September',
+    tags: ['history', 'culture', 'trekking'],
+  },
 ];
 
 async function main() {
   for (const destination of demoDestinations) {
+    const slug = destination.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const { hero, gallery } = placeholderImages(slug, 3);
+    const data = {
+      ...destination,
+      heroImageUrl: hero,
+      galleryImageUrls: gallery,
+    };
+
     await prisma.destination.upsert({
       where: { name_country: { name: destination.name, country: destination.country } },
-      update: destination,
-      create: destination,
+      update: data,
+      create: data,
     });
   }
 

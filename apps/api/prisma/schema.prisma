@@ -117,17 +117,18 @@ model Favourite {
 }
 
 model Destination {
-  id           String   @id @default(uuid())
-  name         String
-  country      String
-  region       String?
-  description  String?
-  heroImageUrl String?
-  budgetLevel  String?
-  bestSeason   String?
-  tags         String[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid())
+  name             String
+  country          String
+  region           String?
+  description      String?
+  heroImageUrl     String?
+  galleryImageUrls String[]
+  budgetLevel      String?
+  bestSeason       String?
+  tags             String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@unique([name, country])
 }
