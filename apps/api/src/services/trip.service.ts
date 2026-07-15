@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import type {
   AccommodationDto,
   BudgetBreakdown,
@@ -145,6 +146,42 @@ export async function duplicateTrip(userId: string, tripId: string) {
     },
     include: TRIP_WITH_ITINERARY_INCLUDE,
   });
+}
+
+export async function ensureShareToken(userId: string, tripId: string) {
+  const trip = await getTripForUser(userId, tripId);
+  if (trip.shareToken) {
+    return trip;
+  }
+
+  const shareToken = randomBytes(16).toString('hex');
+  return prisma.trip.update({
+    where: { id: tripId },
+    data: { shareToken },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
+  });
+}
+
+export async function revokeShareToken(userId: string, tripId: string) {
+  await getTripForUser(userId, tripId);
+  return prisma.trip.update({
+    where: { id: tripId },
+    data: { shareToken: null },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
+  });
+}
+
+export async function getTripByShareToken(shareToken: string) {
+  const trip = await prisma.trip.findUnique({
+    where: { shareToken },
+    include: TRIP_WITH_ITINERARY_INCLUDE,
+  });
+
+  if (!trip || trip.deletedAt) {
+    throw new HttpError(404, 'Shared trip not found');
+  }
+
+  return trip;
 }
 
 export async function pinAccommodation(

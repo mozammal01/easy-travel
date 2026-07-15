@@ -22,7 +22,7 @@ import { Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import type { DayPlanDto, ItineraryItemDto, TripDto } from '@meghjatra/shared';
 import { useAuth } from '@/contexts/auth-context';
-import { apiClient, ApiError } from '@/lib/api-client';
+import { API_URL, apiClient, ApiError } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +106,8 @@ export function ItineraryBoard({ tripId }: { tripId: string }) {
   const [buckets, setBuckets] = useState<Map<string, Bucket>>(new Map());
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const pendingUpdatesRef = useRef<Map<string, PendingUpdate>>(new Map());
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -148,6 +150,31 @@ export function ItineraryBoard({ tripId }: { tripId: string }) {
   function scheduleSave() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(flushSave, AUTOSAVE_DELAY_MS);
+  }
+
+  async function handleExportPdf() {
+    if (!accessToken || !trip) return;
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      const res = await fetch(`${API_URL}/trips/${tripId}/export/pdf`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        throw new Error('Failed to export PDF');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${trip.destination.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-itinerary.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError('Failed to export PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   const sensors = useSensors(
@@ -241,6 +268,9 @@ export function ItineraryBoard({ tripId }: { tripId: string }) {
           <Button variant="outline" size="sm" render={<Link href={`/trips/${tripId}/budget`} />}>
             View budget
           </Button>
+          <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={isExporting}>
+            {isExporting ? 'Exporting...' : 'Export PDF'}
+          </Button>
         </div>
       </div>
       <div className="flex items-center justify-between gap-4">
@@ -253,6 +283,12 @@ export function ItineraryBoard({ tripId }: { tripId: string }) {
         </div>
         <SaveIndicator status={saveStatus} />
       </div>
+      {exportError && (
+        <Alert variant="destructive">
+          <AlertTitle>Export failed</AlertTitle>
+          <AlertDescription>{exportError}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <WeatherWidget destination={trip.destination} />

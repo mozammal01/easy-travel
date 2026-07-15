@@ -32,6 +32,8 @@ export function TripDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [sort, setSort] = useState<SortOption>('newest');
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   function load() {
     apiClient
@@ -76,6 +78,51 @@ export function TripDashboard() {
     } catch (err) {
       setActionError(err instanceof ApiError ? err.message : 'Failed to duplicate trip.');
     }
+  }
+
+  function shareUrlFor(trip: TripDto): string | null {
+    if (!trip.shareToken) return null;
+    return `${window.location.origin}/shared/${trip.shareToken}`;
+  }
+
+  async function handleShare(trip: TripDto) {
+    setSharingId(trip.id);
+    setActionError(null);
+    try {
+      const { trip: updated } = await apiClient.post<{ trip: TripDto }>(
+        `/trips/${trip.id}/share`,
+        undefined,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      setTrips((prev) => prev?.map((t) => (t.id === updated.id ? updated : t)) ?? null);
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : 'Failed to create share link.');
+    } finally {
+      setSharingId(null);
+    }
+  }
+
+  async function handleStopSharing(trip: TripDto) {
+    setSharingId(trip.id);
+    setActionError(null);
+    try {
+      const { trip: updated } = await apiClient.delete<{ trip: TripDto }>(`/trips/${trip.id}/share`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setTrips((prev) => prev?.map((t) => (t.id === updated.id ? updated : t)) ?? null);
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : 'Failed to stop sharing.');
+    } finally {
+      setSharingId(null);
+    }
+  }
+
+  async function handleCopyLink(trip: TripDto) {
+    const url = shareUrlFor(trip);
+    if (!url) return;
+    await navigator.clipboard.writeText(url);
+    setCopiedId(trip.id);
+    setTimeout(() => setCopiedId((id) => (id === trip.id ? null : id)), 2000);
   }
 
   async function handleDelete(tripId: string) {
@@ -178,10 +225,39 @@ export function TripDashboard() {
                   <Button size="sm" variant="outline" onClick={() => handleDelete(trip.id)}>
                     Delete
                   </Button>
-                  <Button size="sm" variant="ghost" disabled title="Coming soon">
-                    Share
-                  </Button>
+                  {trip.shareToken ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={sharingId === trip.id}
+                      onClick={() => handleStopSharing(trip)}
+                    >
+                      Stop sharing
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={sharingId === trip.id}
+                      onClick={() => handleShare(trip)}
+                    >
+                      {sharingId === trip.id ? 'Sharing...' : 'Share'}
+                    </Button>
+                  )}
                 </div>
+                {trip.shareToken && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={shareUrlFor(trip) ?? ''}
+                      onFocus={(e) => e.currentTarget.select()}
+                      className="w-full min-w-0 rounded-md border border-input bg-transparent px-2 py-1 text-xs text-muted-foreground"
+                    />
+                    <Button size="sm" variant="outline" onClick={() => handleCopyLink(trip)}>
+                      {copiedId === trip.id ? 'Copied!' : 'Copy'}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );

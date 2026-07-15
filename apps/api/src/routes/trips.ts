@@ -12,14 +12,18 @@ import {
   addItineraryItem,
   calculateTripBudget,
   duplicateTrip,
+  ensureShareToken,
   generateTripItinerary,
+  getTripByShareToken,
   getTripForUser,
   listTrips,
   pinAccommodation,
   removeItineraryItem,
+  revokeShareToken,
   softDeleteTrip,
   updateItineraryItem,
 } from '../services/trip.service';
+import { generateTripPdf } from '../services/tripExport.service';
 import { toTripDto } from '../lib/dto';
 
 export const tripsRouter = Router();
@@ -40,6 +44,14 @@ tripsRouter.post(
   asyncHandler(async (req, res) => {
     const trip = await generateTripItinerary(req.userId!, req.body);
     res.status(201).json({ trip: toTripDto(trip) });
+  }),
+);
+
+tripsRouter.get(
+  '/shared/:token',
+  asyncHandler(async (req, res) => {
+    const trip = await getTripByShareToken(req.params.token);
+    res.json({ trip: toTripDto(trip) });
   }),
 );
 
@@ -77,6 +89,38 @@ tripsRouter.post(
   asyncHandler(async (req, res) => {
     const trip = await pinAccommodation(req.userId!, req.params.id, req.body);
     res.json({ trip: toTripDto(trip) });
+  }),
+);
+
+tripsRouter.post(
+  '/:id/share',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const trip = await ensureShareToken(req.userId!, req.params.id);
+    res.json({ trip: toTripDto(trip) });
+  }),
+);
+
+tripsRouter.delete(
+  '/:id/share',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const trip = await revokeShareToken(req.userId!, req.params.id);
+    res.json({ trip: toTripDto(trip) });
+  }),
+);
+
+tripsRouter.get(
+  '/:id/export/pdf',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const trip = await getTripForUser(req.userId!, req.params.id);
+    const tripDto = toTripDto(trip);
+    const pdfBytes = await generateTripPdf(tripDto);
+    const filename = `${tripDto.destination.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-itinerary.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(Buffer.from(pdfBytes));
   }),
 );
 
