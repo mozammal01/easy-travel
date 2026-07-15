@@ -1,4 +1,7 @@
 import type {
+  BudgetBreakdown,
+  BudgetCategory,
+  BudgetSummary,
   CreateItineraryItemInput,
   CreateTripInput,
   UpdateItineraryItemInput,
@@ -10,6 +13,7 @@ import { HttpError } from '../middleware/errorHandler';
 const MAX_ACTIVE_TRIPS_PER_USER = 50;
 const MIN_TRIP_DAYS = 1;
 const MAX_TRIP_DAYS = 60;
+const OVERSPEND_THRESHOLD_RATIO = 1.1;
 
 const TRIP_WITH_ITINERARY_INCLUDE = {
   itinerary: {
@@ -72,6 +76,7 @@ export async function generateTripItinerary(userId: string, input: CreateTripInp
               activityName: item.activityName,
               durationMin: item.durationMin,
               cost: item.cost,
+              category: item.category,
               mapLink: item.mapLink ?? undefined,
               tips: item.tips ?? undefined,
             })),
@@ -129,6 +134,7 @@ export async function duplicateTrip(userId: string, tripId: string) {
               activityName: item.activityName,
               durationMin: item.durationMin,
               cost: item.cost,
+              category: item.category,
               mapLink: item.mapLink ?? undefined,
               tips: item.tips ?? undefined,
             })),
@@ -170,6 +176,7 @@ export async function updateItineraryItem(
       dayPlanId: input.dayPlanId,
       timeBlock: input.timeBlock,
       order: input.order,
+      category: input.category,
     },
   });
 
@@ -200,6 +207,7 @@ export async function addItineraryItem(
       activityName: input.activityName,
       durationMin: input.durationMin,
       cost: input.cost,
+      category: input.category,
       mapLink: input.mapLink ?? undefined,
       tips: input.tips ?? undefined,
     },
@@ -218,4 +226,41 @@ export async function removeItineraryItem(userId: string, tripId: string, itemId
   await prisma.itineraryItem.delete({ where: { id: itemId } });
 
   return getTripForUser(userId, tripId);
+}
+
+export async function calculateTripBudget(userId: string, tripId: string): Promise<BudgetSummary> {
+  const trip = await getTripForUser(userId, tripId);
+
+  const breakdown: BudgetBreakdown = { flights: 0, stay: 0, food: 0, activities: 0, misc: 0 };
+  for (const day of trip.itinerary) {
+    for (const item of day.items) {
+      const category = item.category as BudgetCategory;
+      breakdown[category] = (breakdown[category] ?? 0) + Number(item.cost);
+    }
+  }
+
+  const accommodation = trip.accommodation as { price?: number } | null;
+  if (accommodation && typeof accommodation.price === 'number') {
+    breakdown.stay += accommodation.price;
+  }
+
+  const totalSpend = Object.values(breakdown).reduce((sum, value) => sum + value, 0);
+  const budgetTotal = Number(trip.budgetTotal);
+  const isOverBudget = totalSpend > budgetTotal * OVERSPEND_THRESHOLD_RATIO;
+  const overspendPercent =
+    budgetTotal > 0 ? Math.round(((totalSpend - budgetTotal) / budgetTotal) * 1000) / 10 : 0;
+
+  await prisma.trip.update({
+    where: { id: tripId },
+    data: { budgetBreakdown: breakdown },
+  });
+
+  return {
+    budgetTotal,
+    budgetCurrency: trip.budgetCurrency,
+    breakdown,
+    totalSpend,
+    isOverBudget,
+    overspendPercent,
+  };
 }

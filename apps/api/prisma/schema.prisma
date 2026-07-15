@@ -84,6 +84,7 @@ model ItineraryItem {
   activityName String
   durationMin  Int
   cost         Decimal  @db.Decimal(10, 2)
+  category     String   @default("activities")
   mapLink      String?
   tips         String?
 

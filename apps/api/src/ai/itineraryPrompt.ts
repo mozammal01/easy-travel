@@ -11,7 +11,8 @@ export function buildItineraryPrompt(input: CreateTripInput, totalDays: number):
     `Travelers: ${input.travelers}. Total budget: ${input.budgetTotal} ${input.budgetCurrency}.`,
     `Trip style: ${input.style} (aim for ${itemsPerDayHint} activities per day, spread across morning/afternoon/evening).`,
     'Respond with ONLY a JSON object (no markdown, no prose) matching exactly this shape:',
-    '{ "days": [ { "dayIndex": number (0-based), "items": [ { "timeBlock": "morning" | "afternoon" | "evening", "order": number, "activityName": string, "durationMin": number, "cost": number, "mapLink": string | null, "tips": string | null } ] } ] }',
+    '{ "days": [ { "dayIndex": number (0-based), "items": [ { "timeBlock": "morning" | "afternoon" | "evening", "order": number, "activityName": string, "durationMin": number, "cost": number, "category": "flights" | "stay" | "food" | "activities" | "misc", "mapLink": string | null, "tips": string | null } ] } ] }',
+    'Tag each item with the budget category it belongs to: "food" for meals/restaurants, "activities" for sightseeing/tours/entertainment, "flights" for any air travel/transfers, "stay" for lodging-related costs, "misc" for anything else.',
     `Include exactly ${totalDays} day objects, with dayIndex from 0 to ${totalDays - 1}, each containing at least one item. Keep total item cost roughly within the trip budget.`,
   ];
   return lines.join('\n');

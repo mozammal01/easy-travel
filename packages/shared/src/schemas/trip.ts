@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { tripStatusSchema } from './enums';
 
+export const budgetCategorySchema = z.enum(['flights', 'stay', 'food', 'activities', 'misc']);
+export type BudgetCategory = z.infer<typeof budgetCategorySchema>;
+
 export const budgetBreakdownSchema = z.object({
   flights: z.number().nonnegative(),
   stay: z.number().nonnegative(),
@@ -17,6 +20,7 @@ export const itineraryItemSchema = z.object({
   activityName: z.string().min(1),
   durationMin: z.number().int().positive(),
   cost: z.number().nonnegative(),
+  category: budgetCategorySchema,
   mapLink: z.string().url().nullable().optional(),
   tips: z.string().nullable().optional(),
 });
@@ -72,6 +76,7 @@ export const generatedItineraryItemSchema = z.object({
   activityName: z.string().min(1),
   durationMin: z.number().int().positive(),
   cost: z.number().nonnegative(),
+  category: budgetCategorySchema,
   mapLink: z.string().url().nullable().optional(),
   tips: z.string().nullable().optional(),
 });
@@ -92,6 +97,7 @@ export const updateItineraryItemInputSchema = z.object({
   dayPlanId: z.string().uuid().optional(),
   timeBlock: z.enum(['morning', 'afternoon', 'evening']).optional(),
   order: z.number().int().nonnegative().optional(),
+  category: budgetCategorySchema.optional(),
 });
 export type UpdateItineraryItemInput = z.infer<typeof updateItineraryItemInputSchema>;
 
@@ -101,7 +107,18 @@ export const createItineraryItemInputSchema = z.object({
   activityName: z.string().min(1),
   durationMin: z.number().int().positive(),
   cost: z.number().nonnegative(),
+  category: budgetCategorySchema,
   mapLink: z.string().url().nullable().optional(),
   tips: z.string().nullable().optional(),
 });
 export type CreateItineraryItemInput = z.infer<typeof createItineraryItemInputSchema>;
+
+export const budgetSummarySchema = z.object({
+  budgetTotal: z.number().nonnegative(),
+  budgetCurrency: z.string().length(3),
+  breakdown: budgetBreakdownSchema,
+  totalSpend: z.number().nonnegative(),
+  isOverBudget: z.boolean(),
+  overspendPercent: z.number(),
+});
+export type BudgetSummary = z.infer<typeof budgetSummarySchema>;

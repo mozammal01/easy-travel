@@ -9,6 +9,7 @@ import { validateBody } from '../middleware/validate';
 import { asyncHandler } from '../lib/asyncHandler';
 import {
   addItineraryItem,
+  calculateTripBudget,
   duplicateTrip,
   generateTripItinerary,
   getTripForUser,
@@ -55,6 +56,15 @@ tripsRouter.delete(
   asyncHandler(async (req, res) => {
     await softDeleteTrip(req.userId!, req.params.id);
     res.status(204).send();
+  }),
+);
+
+tripsRouter.get(
+  '/:id/budget',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const budget = await calculateTripBudget(req.userId!, req.params.id);
+    res.json({ budget });
   }),
 );
 

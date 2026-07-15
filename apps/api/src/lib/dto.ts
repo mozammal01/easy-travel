@@ -40,6 +40,7 @@ export function toTripDto(trip: TripWithItinerary): TripDto {
         activityName: item.activityName,
         durationMin: item.durationMin,
         cost: Number(item.cost),
+        category: item.category as ItineraryItemDto['category'],
         mapLink: item.mapLink,
         tips: item.tips,
       })),
